@@ -21,6 +21,14 @@ def perspective_transform(image, mtx, dist, src, dest):
 
     return warped
 
+def draw_lines(image, quad):
+
+    print("Quad: \n", quad)
+
+    for i in range(len(quad)):
+
+        cv2.line(image, tuple(quad[i]), tuple(quad[(i + 1) % len(quad)]), (0, 0, 255), thickness = 2)
+
 if __name__ == "__main__":
 
     image = cv2.imread("../test_images/straight_lines1.jpg")
@@ -28,11 +36,15 @@ if __name__ == "__main__":
     print("image shape: ", image.shape)
 
     src = np.float32([
-        [212, 719], # bottom left
-        [591, 456], # top left
-        [687, 456], # top right
-        [1096, 719] # bottom right
+        [250, 678], # bottom left
+        [585, 456], # top left
+        [698, 456], # top right
+        [1057, 678] # bottom right
     ])
+
+    img_copy = np.copy(image)
+
+    draw_lines(img_copy, src)
 
     dest = np.float32([
         [386, 719], # bottom left
@@ -45,7 +57,9 @@ if __name__ == "__main__":
 
     warped = perspective_transform(image, mtx, dist, src, dest)
 
-    cv2.imshow("image", image)
+    draw_lines(warped, dest)
+
+    cv2.imshow("image", img_copy)
     cv2.waitKey()
 
     cv2.imshow("warped", warped)

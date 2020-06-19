@@ -9,3 +9,7 @@ from calibrate_camera import extract_points, camera_cal
 # obtain camera matrix and distortion coefficients
 mtx, dist = extract_points(glob.glob("../camera_cal/*"))
 
+
+# process input
+
+# feed frames through pipeline

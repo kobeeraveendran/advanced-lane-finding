@@ -20,7 +20,7 @@ def extract_points(images):
     '''
 
     obj = np.zeros((6 * 9, 3), np.float32)
-    obj[:, :2] = np.mgrid[0:8, 0:6].T.reshape(-1, 2)
+    obj[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 
     obj_points = []
     img_points = []
@@ -36,7 +36,7 @@ def extract_points(images):
             obj_points.append(obj)
             img_points.append(corners)
 
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obs_points, img_points, gray.shape[::-1], None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, gray.shape[::-1], None, None)
 
     dist_pickle = {}
     dist_pickle["mtx"] = mtx
@@ -79,7 +79,7 @@ def camera_cal(filename, mtx, dist):
 
 if __name__ == "__main__":
 
-    if len(sys.argv > 1):
+    if len(sys.argv) > 1:
 
         # preferably a path without a trailing '/'
         image_list = glob.glob(sys.argv[1] + "/*")
@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
     mtx, dist = extract_points(image_list)
 
-    os.makedirs("undistorted", exist_ok = True)
+    os.makedirs("../undistorted/", exist_ok = True)
 
     dst = camera_cal("../camera_cal/calibration1.jpg", mtx, dist)

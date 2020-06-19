@@ -5,6 +5,8 @@ import glob
 
 import sys
 import os
+import pickle
+
 
 def extract_points(images):
 
@@ -23,7 +25,7 @@ def extract_points(images):
     obj_points = []
     img_points = []
 
-    for i, filename in enumerate(images):
+    for filename in images:
 
         image = cv2.imread(filename)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -36,10 +38,16 @@ def extract_points(images):
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obs_points, img_points, gray.shape[::-1], None, None)
 
-    return gray, obj_points, img_points
+    dist_pickle = {}
+    dist_pickle["mtx"] = mtx
+    dist_pickle["dist"] = dist
+
+    pickle.dump(dist_pickle, open("dist_pickle.p", "wb"))
+
+    return mtx, dist
 
 
-def calibrate_camera(filename, mtx, dist):
+def camera_cal(filename, mtx, dist):
 
     '''
     args:
@@ -57,14 +65,15 @@ def calibrate_camera(filename, mtx, dist):
 
     split = filename.split('.')
 
-    image = cv2.imread(filename)
+    new_filename = filename.split('.')[-2].split('/')[-1]
 
+    image = cv2.imread(filename)
 
     # undistort image
     dst = cv2.undistort(image, mtx, dist, None, mtx)
 
     # write to new image for checking purposes
-    cv2.imwrite("{}_undist.{}".format(''.join(split[0:-1]), split[-1]), dst)
+    cv2.imwrite("../undistorted/{}_undist.{}".format(new_filename, split[-1]), dst)
 
     return dst
 
@@ -78,6 +87,8 @@ if __name__ == "__main__":
     else:
         image_list = glob.glob("../camera_cal/*")
 
-    _, mtx, dist, _, _ = extract_points(image_list)
+    mtx, dist = extract_points(image_list)
 
-    #dst = calibrate_camera()
+    os.makedirs("undistorted", exist_ok = True)
+
+    dst = camera_cal("../camera_cal/calibration1.jpg", mtx, dist)

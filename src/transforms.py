@@ -53,7 +53,10 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    mtx, dist = extract_points(glob.glob("../camera_cal/*.jpg"))
+    #mtx, dist = extract_points(glob.glob("../camera_cal/*.jpg"))
+    dist_pickle = pickle.load(open("dist_pickle.p", "rb"))
+    mtx = dist_pickle["mtx"]
+    dist = dist_pickle["dist"]
 
     warped = perspective_transform(image, mtx, dist, src, dest)
 

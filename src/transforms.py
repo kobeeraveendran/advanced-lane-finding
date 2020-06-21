@@ -6,28 +6,19 @@ import pickle
 
 from calibrate_camera import extract_points
 
+
 def perspective_transform(image, mtx, dist, src, dest):
-
-    undist = cv2.undistort(image, mtx, dist)
-
-    try:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    except:
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     M = cv2.getPerspectiveTransform(src, dest)
     warped = cv2.warpPerspective(image, M, (image.shape[1], image.shape[0]), flags = cv2.INTER_LINEAR)
 
     return warped
 
-def draw_lines(image, quad):
+def draw_lines(image, polygon):
 
-    print("Quad: \n", quad)
+    for i in range(len(polygon)):
 
-    for i in range(len(quad)):
-
-        cv2.line(image, tuple(quad[i]), tuple(quad[(i + 1) % len(quad)]), (0, 0, 255), thickness = 2)
+        cv2.line(image, tuple(polygon[i]), tuple(polygon[(i + 1) % len(polygon)]), (0, 0, 255), thickness = 2)
 
 if __name__ == "__main__":
 
@@ -44,7 +35,7 @@ if __name__ == "__main__":
 
     img_copy = np.copy(image)
 
-    draw_lines(img_copy, src)
+    #draw_lines(img_copy, src)
 
     dest = np.float32([
         [386, 719], # bottom left

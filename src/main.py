@@ -14,9 +14,20 @@ def find_lane_lines(image):
 
     undist = cv2.undistort(image, mtx, dist)
 
-    thresholded = threshold(undist)
+    thresholded= threshold(undist)
 
     warped = perspective_transform(thresholded, mtx, dist, src, dest)
+
+    peaks = histogram_peaks(warped)
+    
+    plt.subplot(2, 1, 1)
+    plt.plot(peaks)
+    plt.title("Histogram peaks")
+
+    plt.subplot(2, 1, 2)
+    plt.imshow(warped, cmap = "gray")
+    
+    plt.show()
 
     return warped
 
@@ -43,15 +54,15 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    image = cv2.imread("../test_images/straight_lines1.jpg")
+    image = cv2.imread("../test_images/test5.jpg")
 
     result = find_lane_lines(image)
 
-    plt.imshow(image)
-    plt.show()
+    # plt.imshow(image)
+    # plt.show()
     
-    plt.imshow(result, cmap = "gray")
-    plt.show()
+    # plt.imshow(result, cmap = "gray")
+    # plt.show()
 
     # cv2.imshow("Original", image)
     # cv2.waitKey()

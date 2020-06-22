@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import cv2
 import glob
 import pickle
@@ -22,7 +23,8 @@ def draw_lines(image, polygon):
 
 if __name__ == "__main__":
 
-    image = cv2.imread("../test_images/test5.jpg")
+    #image = cv2.imread("../test_images/test5.jpg")
+    image = mpimg.imread("../test_images/test5.jpg")
 
     src = np.float32([
         [250, 678], # bottom left
@@ -54,8 +56,13 @@ if __name__ == "__main__":
 
     draw_lines(warped, dest)
 
-    cv2.imshow("undist", undist)
-    cv2.waitKey()
+    # cv2.imshow("undist", undist)
+    # cv2.waitKey()
 
-    cv2.imshow("warped", warped)
-    cv2.waitKey()
+    # cv2.imshow("warped", warped)
+    # cv2.waitKey()
+
+    plt.imshow(undist)
+    plt.show()
+    plt.imshow(warped)
+    plt.show()

@@ -30,6 +30,15 @@ class Line():
         # offset from line to vehicle center
         self.offset = None
 
+        # diff between prev and current line of best fit coefficients
+        self.diffs = np.array([0, 0, 0], dtype = 'float')
+
+        # x values of detected line pixels
+        self.all_x = None
+
+        # y values of detected line pixels
+        self.all_y = None
+
         
 
 def threshold(image):
@@ -67,11 +76,68 @@ def threshold(image):
 
     return combined_binary
 
-def histogram_peaks(image):
+def base_lane_lines(image):
 
-    bottom_half = image[image.shape[0] // 2, :]
+    #plt.imshow(image, cmap = "gray")
 
-    return np.sum(bottom_half, axis = 0)
+    histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
+
+    # identify x coord of left and right lane lines
+    mid = np.int(histogram.shape[0] // 2)
+    left_base = np.argmax(histogram[:mid])
+    right_base = np.argmax(histogram[mid:]) + mid
+
+    # set up sliding window procedure
+    num_windows = 9
+    margin = 100
+    min_pix = 50
+
+    win_height = np.int(image.shape[0] // num_windows)
+
+    # all activated pixels
+    nonzero = image.nonzero()
+    nonzero_x = np.array(nonzero[1])
+    nonzero_y = np.array(nonzero[0])
+
+    left_current = left_base
+    right_current = right_base
+
+    left_lane_indices = []
+    right_lane_indices = []
+
+    for window in range(num_windows):
+        leftx_start = left_current - margin
+        rightx_start = right_current - margin
+        leftx_end = left_current + margin
+        rightx_end = right_current + margin
+
+        y_start = image.shape[0] - (window + 1) * win_height
+        y_end = image.shape[0] - window * win_height
+
+        # extract nonzero pixels in windows
+        left_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= leftx_start) & (nonzero_x < leftx_end)).nonzero()[0]
+        right_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= rightx_start) & (nonzero_x < rightx_end)).nonzero()[0]
+
+        left_lane_indices.append(left_inds)
+        right_lane_indices.append(right_inds)
+
+        if len(left_inds) > min_pix:
+            left_current = np.int(np.mean(nonzero_x[left_inds]))
+        
+        if len(right_inds) > min_pix:
+            right_current = np.int(np.mean(nonzero_x[right_inds]))
+
+    left_lane_indices = np.concatenate(left_lane_indices)
+    right_lane_indices = np.concatenate(right_lane_indices)
+
+    left_x = nonzero_x[left_lane_indices]
+    left_y = nonzero_y[left_lane_indices]
+    right_x = nonzero_y[right_lane_indices]
+    right_y = nonzero_y[right_lane_indices]
+
+    return left_x, left_y, right_x, right_y
+
+
 
 
 if __name__ == "__main__":

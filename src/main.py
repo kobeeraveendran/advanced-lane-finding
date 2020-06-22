@@ -6,15 +6,19 @@ import pickle
 
 from calibrate_camera import extract_points, camera_cal
 from transforms import perspective_transform, draw_lines
+from detection import threshold, histogram_peaks
+from detection import Line
 
 # for one image
 def find_lane_lines(image):
 
     undist = cv2.undistort(image, mtx, dist)
 
-    warped = perspective_transform(undist, mtx, dist, src, dest)
+    thresholded = threshold(undist)
 
+    warped = perspective_transform(thresholded, mtx, dist, src, dest)
 
+    return warped
 
 if __name__ == "__main__":
 
@@ -38,3 +42,19 @@ if __name__ == "__main__":
         [894, 0],   # top right
         [894, 719]  # bottom right
     ])
+
+    image = cv2.imread("../test_images/straight_lines1.jpg")
+
+    result = find_lane_lines(image)
+
+    plt.imshow(image)
+    plt.show()
+    
+    plt.imshow(result, cmap = "gray")
+    plt.show()
+
+    # cv2.imshow("Original", image)
+    # cv2.waitKey()
+
+    # cv2.imshow("Result", result)
+    # cv2.waitKey()

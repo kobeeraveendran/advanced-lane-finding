@@ -22,9 +22,7 @@ def draw_lines(image, polygon):
 
 if __name__ == "__main__":
 
-    image = cv2.imread("../test_images/straight_lines1.jpg")
-
-    print("image shape: ", image.shape)
+    image = cv2.imread("../test_images/test5.jpg")
 
     src = np.float32([
         [250, 678], # bottom left
@@ -35,7 +33,6 @@ if __name__ == "__main__":
 
     img_copy = np.copy(image)
 
-    #draw_lines(img_copy, src)
 
     dest = np.float32([
         [386, 719], # bottom left
@@ -49,11 +46,15 @@ if __name__ == "__main__":
     mtx = dist_pickle["mtx"]
     dist = dist_pickle["dist"]
 
+    undist = cv2.undistort(img_copy, mtx, dist)
+
+    draw_lines(undist, src)
+
     warped = perspective_transform(image, mtx, dist, src, dest)
 
     draw_lines(warped, dest)
 
-    cv2.imshow("image", img_copy)
+    cv2.imshow("undist", undist)
     cv2.waitKey()
 
     cv2.imshow("warped", warped)

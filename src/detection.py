@@ -82,6 +82,8 @@ def base_lane_lines(image):
 
     histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
 
+    out_img = np.dstack((image, image, image))
+
     # identify x coord of left and right lane lines
     mid = np.int(histogram.shape[0] // 2)
     left_base = np.argmax(histogram[:mid])
@@ -114,6 +116,9 @@ def base_lane_lines(image):
         y_start = image.shape[0] - (window + 1) * win_height
         y_end = image.shape[0] - window * win_height
 
+        cv2.rectangle(out_img, (leftx_start, y_start), (leftx_end, y_end), (0, 255, 0), 2)
+        cv2.rectangle(out_img, (rightx_start, y_start), (rightx_end, y_end), (0, 255, 0), 2)
+
         # extract nonzero pixels in windows
         left_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= leftx_start) & (nonzero_x < leftx_end)).nonzero()[0]
         right_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= rightx_start) & (nonzero_x < rightx_end)).nonzero()[0]
@@ -132,10 +137,30 @@ def base_lane_lines(image):
 
     left_x = nonzero_x[left_lane_indices]
     left_y = nonzero_y[left_lane_indices]
-    right_x = nonzero_y[right_lane_indices]
+    right_x = nonzero_x[right_lane_indices]
     right_y = nonzero_y[right_lane_indices]
 
-    return left_x, left_y, right_x, right_y
+    return left_x, left_y, right_x, right_y, out_img
+
+def fit_poly(warped_image):
+
+    leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
+
+    left_fit = np.polyfit(lefty, leftx, deg = 2)
+    right_fit = np.polyfit(righty, rightx, deg = 2)
+    
+    y = np.linspace(0, warped_image.shape[0] - 1, warped_image.shape[0])
+
+    left_fitx = left_fit[0] * y ** 2 + left_fit[1] * y + left_fit[2]
+    right_fitx = right_fit[0] * y ** 2 + right_fit[1] * y + right_fit[2]
+
+    out_img[lefty, leftx] = [255, 0, 0]
+    out_img[righty, rightx] = [0, 0, 255]
+
+    plt.plot(left_fitx, y, color = "yellow")
+    plt.plot(right_fitx, y, color = "yellow")
+
+    return left_fit, right_fit, out_img
 
 
 

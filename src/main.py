@@ -1,31 +1,36 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import glob
 import pickle
 
 from calibrate_camera import extract_points, camera_cal
 from transforms import perspective_transform, draw_lines
-from detection import threshold, histogram_peaks
+from detection import threshold, base_lane_lines, fit_poly
 from detection import Line
 
 # for one image
-def find_lane_lines(image):
+def find_lane_lines(image, left_lane_line, right_lane_line):
 
     undist = cv2.undistort(image, mtx, dist)
 
-    thresholded= threshold(undist)
+    thresholded = threshold(undist)
 
     warped = perspective_transform(thresholded, mtx, dist, src, dest)
 
-    peaks = histogram_peaks(warped)
-    
-    plt.subplot(2, 1, 1)
-    plt.plot(peaks)
-    plt.title("Histogram peaks")
+    #leftx, lefty, rightx, righty, out_img = base_lane_lines(warped)
 
-    plt.subplot(2, 1, 2)
-    plt.imshow(warped, cmap = "gray")
+    left_fit, right_fit, out_img = fit_poly(warped)
+    
+    plt.imshow(out_img, cmap = "gray")
+
+    # plt.subplot(2, 1, 1)
+    # plt.plot(peaks)
+    # plt.title("Histogram peaks")
+
+    # plt.subplot(2, 1, 2)
+    # plt.imshow(warped, cmap = "gray")
     
     plt.show()
 
@@ -54,7 +59,7 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    image = cv2.imread("../test_images/test5.jpg")
+    image = mpimg.imread("../test_images/test5.jpg")
 
     result = find_lane_lines(image)
 

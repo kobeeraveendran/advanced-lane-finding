@@ -142,27 +142,30 @@ def base_lane_lines(image):
 
     return left_x, left_y, right_x, right_y, out_img
 
-def fit_poly(warped_image):
+def fit_poly(img_shape, leftx, lefty, rightx, righty):
 
-    leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
+    # leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
 
     left_fit = np.polyfit(lefty, leftx, deg = 2)
     right_fit = np.polyfit(righty, rightx, deg = 2)
     
-    y = np.linspace(0, warped_image.shape[0] - 1, warped_image.shape[0])
+    y = np.linspace(0, img_shape[0] - 1, img_shape[0])
 
     left_fitx = left_fit[0] * y ** 2 + left_fit[1] * y + left_fit[2]
     right_fitx = right_fit[0] * y ** 2 + right_fit[1] * y + right_fit[2]
 
-    out_img[lefty, leftx] = [255, 0, 0]
-    out_img[righty, rightx] = [0, 0, 255]
+    # out_img[lefty, leftx] = [255, 0, 0]
+    # out_img[righty, rightx] = [0, 0, 255]
 
-    plt.plot(left_fitx, y, color = "yellow")
-    plt.plot(right_fitx, y, color = "yellow")
+    # plt.plot(left_fitx, y, color = "yellow")
+    # plt.plot(right_fitx, y, color = "yellow")
 
-    return left_fit, right_fit, out_img
+    return left_fit, right_fit, left_fitx, right_fitx, y
 
+# def prior_frame_search(warped, margin):
 
+def prior_frame_search(warped, margin):
+    
 
 
 if __name__ == "__main__":

@@ -5,13 +5,17 @@ import matplotlib.image as mpimg
 import glob
 import pickle
 
+from moviepy.editor import VideoFileClip
+import os
+
 from calibrate_camera import extract_points, camera_cal
 from helper import perspective_transform, draw_lines, curvature, offset
 from detection import threshold, base_lane_lines, fit_poly
 from detection import Line
 
 # for one image
-def find_lane_lines(image, left_lane_line, right_lane_line):
+#def find_lane_lines(image, left_lane_line, right_lane_line):
+def find_lane_lines(image):
 
     undist = cv2.undistort(image, mtx, dist)
 
@@ -19,13 +23,16 @@ def find_lane_lines(image, left_lane_line, right_lane_line):
 
     warped, M, M_inv = perspective_transform(thresholded, mtx, dist, src, dest)
 
-    #leftx, lefty, rightx, righty, out_img = base_lane_lines(warped)
+    # if not (left_lane_line.detected or right_lane_line.detected):
+    #     leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
+    #     left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
 
-    if not (left_lane_line.detected or right_lane_line.detected):
-        leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
-        left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
+    #     left_curve, right_curve = curvature(left_fit, right_fit, y)
 
-        left_curve, right_curve = curvature(left_fit, right_fit, y)
+    leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
+    left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
+
+    left_curve, right_curve = curvature(left_fit, right_fit, y)
 
     warp_zero = np.zeros_like(warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
@@ -63,9 +70,9 @@ def find_lane_lines(image, left_lane_line, right_lane_line):
     )
 
     #plt.imshow(warped, cmap = "gray")
-    plt.imshow(result)
+    # plt.imshow(result)
     
-    plt.show()
+    # plt.show()
 
     return result
 
@@ -92,13 +99,20 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    for image in glob.glob("../test_images/*.jpg"):
-        image = mpimg.imread(image)
+    # for image in glob.glob("../test_images/*.jpg"):
+    #     image = mpimg.imread(image)
 
-        left_lane_line = Line()
-        right_lane_line = Line()
+    #     left_lane_line = Line()
+    #     right_lane_line = Line()
 
-        result = find_lane_lines(image, left_lane_line, right_lane_line)
+    #     #result = find_lane_lines(image, left_lane_line, right_lane_line)
+    #     result = find_lane_lines(image)
+
+    os.makedirs("../output_videos/", exist_ok = True)
+    
+    input_vid = VideoFileClip("../project_video.mp4")
+    process_clip = input_vid.fl_image(find_lane_lines)
+    process_clip.write_videofile("../output_videos/project_video_output.mp4", audio = False)
 
     # image = mpimg.imread("../test_images/straight_lines1.jpg")
 

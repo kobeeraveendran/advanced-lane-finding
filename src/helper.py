@@ -18,8 +18,8 @@ def perspective_transform(image, mtx, dist, src, dest):
 
 def curvature(left_fit, right_fit, y):
 
-    #ym_per_pix = 30 / 720
-    ym_per_pix = 3 / 200
+    ym_per_pix = 30 / 720
+    #ym_per_pix = 3 / 200
 
     y_eval = np.max(y)
     y_eval *= ym_per_pix

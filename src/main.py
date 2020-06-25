@@ -92,20 +92,20 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    # for image in glob.glob("../test_images/*.jpg"):
-    #     image = mpimg.imread(image)
+    for image in glob.glob("../test_images/*.jpg"):
+        image = mpimg.imread(image)
 
-    #     left_lane_line = Line()
-    #     right_lane_line = Line()
+        left_lane_line = Line()
+        right_lane_line = Line()
 
-    #     result = find_lane_lines(image, left_lane_line, right_lane_line)
+        result = find_lane_lines(image, left_lane_line, right_lane_line)
 
-    image = mpimg.imread("../test_images/straight_lines1.jpg")
+    # image = mpimg.imread("../test_images/straight_lines1.jpg")
 
-    left_lane_line = Line()
-    right_lane_line = Line()
+    # left_lane_line = Line()
+    # right_lane_line = Line()
 
-    result = find_lane_lines(image, left_lane_line, right_lane_line)
+    # result = find_lane_lines(image, left_lane_line, right_lane_line)
 
     # plt.imshow(image)
     # plt.show()

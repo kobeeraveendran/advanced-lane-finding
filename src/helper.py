@@ -16,6 +16,32 @@ def perspective_transform(image, mtx, dist, src, dest):
 
     return warped, M, M_inv
 
+def curvature(left_fit, right_fit, y):
+
+    #ym_per_pix = 30 / 720
+    ym_per_pix = 3 / 200
+
+    y_eval = np.max(y)
+    y_eval *= ym_per_pix
+
+    left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** (3/2)) / abs(2 * left_fit[0])
+    right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** (3/2)) / abs(2 * right_fit[0])
+
+    return left_curverad, right_curverad
+
+def offset(car_center, lane_center):
+
+    xm_per_pix = 3.7 / 700
+
+    if lane_center - car_center > 0:
+        return "{}m left of center".format(round((lane_center - car_center) * xm_per_pix, 2))
+
+    elif lane_center - car_center < 0:
+        return "{}m right of center".format(round((lane_center - car_center) * -xm_per_pix, 2))
+
+    else:
+        return "centered"
+
 def draw_lines(image, polygon):
 
     for i in range(len(polygon)):

@@ -6,7 +6,7 @@ import glob
 import pickle
 
 from calibrate_camera import extract_points, camera_cal
-from transforms import perspective_transform, draw_lines
+from helper import perspective_transform, draw_lines, curvature, offset
 from detection import threshold, base_lane_lines, fit_poly
 from detection import Line
 
@@ -22,17 +22,10 @@ def find_lane_lines(image, left_lane_line, right_lane_line):
     #leftx, lefty, rightx, righty, out_img = base_lane_lines(warped)
 
     if not (left_lane_line.detected or right_lane_line.detected):
-        leftx, lefty, rightx, righty, _ = base_lane_lines(warped)
+        leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
         left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
-    
-    # plt.imshow(out_img, cmap = "gray")
 
-    # plt.subplot(2, 1, 1)
-    # plt.plot(peaks)
-    # plt.title("Histogram peaks")
-
-    # plt.subplot(2, 1, 2)
-    # plt.imshow(warped, cmap = "gray")
+        left_curve, right_curve = curvature(left_fit, right_fit, y)
 
     warp_zero = np.zeros_like(warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
@@ -46,11 +39,35 @@ def find_lane_lines(image, left_lane_line, right_lane_line):
     new_warp = cv2.warpPerspective(color_warp, M_inv, (image.shape[1], image.shape[0]))
 
     result = cv2.addWeighted(undist, 1, new_warp, 0.3, 0)
+
+    offset_text = offset(car_center, lane_center)
+
+    cv2.putText(
+        result, 
+        "Radius of Curvature: {}m".format(round(min(left_curve, right_curve), 1)), 
+        (100, 100), 
+        cv2.FONT_HERSHEY_COMPLEX, # use complex
+        1, 
+        (0, 255, 0), 
+        2
+    )
+
+    cv2.putText(
+        result, 
+        "Vehicle is {}".format(offset_text), 
+        (100, 150), 
+        cv2.FONT_HERSHEY_COMPLEX, 
+        1, 
+        (0, 255, 0), 
+        2
+    )
+
+    #plt.imshow(warped, cmap = "gray")
     plt.imshow(result)
     
     plt.show()
 
-    return warped
+    return result
 
 if __name__ == "__main__":
 
@@ -75,7 +92,15 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    image = mpimg.imread("../test_images/test5.jpg")
+    # for image in glob.glob("../test_images/*.jpg"):
+    #     image = mpimg.imread(image)
+
+    #     left_lane_line = Line()
+    #     right_lane_line = Line()
+
+    #     result = find_lane_lines(image, left_lane_line, right_lane_line)
+
+    image = mpimg.imread("../test_images/straight_lines1.jpg")
 
     left_lane_line = Line()
     right_lane_line = Line()

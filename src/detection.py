@@ -76,18 +76,31 @@ def threshold(image):
 
     return combined_binary
 
+def histogram_peaks(image):
+    hist = np.sum(image[image.shape[0] // 2:, :], axis = 0)
+
+    car_center = np.int(hist.shape[0] // 2)
+    left_base = np.argmax(hist[:car_center])
+    right_base = np.argmax(hist[car_center:]) + car_center
+
+    lane_center = (left_base + right_base) // 2
+
+    return left_base, right_base, car_center, lane_center
+
 def base_lane_lines(image):
 
     #plt.imshow(image, cmap = "gray")
 
-    histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
+    # histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
 
-    out_img = np.dstack((image, image, image))
+    # #out_img = np.dstack((image, image, image))
 
-    # identify x coord of left and right lane lines
-    mid = np.int(histogram.shape[0] // 2)
-    left_base = np.argmax(histogram[:mid])
-    right_base = np.argmax(histogram[mid:]) + mid
+    # # identify x coord of left and right lane lines
+    # mid = np.int(histogram.shape[0] // 2)
+    # left_base = np.argmax(histogram[:mid])
+    # right_base = np.argmax(histogram[mid:]) + mid
+
+    left_base, right_base, car_center, lane_center = histogram_peaks(image)
 
     # set up sliding window procedure
     num_windows = 9
@@ -116,8 +129,8 @@ def base_lane_lines(image):
         y_start = image.shape[0] - (window + 1) * win_height
         y_end = image.shape[0] - window * win_height
 
-        cv2.rectangle(out_img, (leftx_start, y_start), (leftx_end, y_end), (0, 255, 0), 2)
-        cv2.rectangle(out_img, (rightx_start, y_start), (rightx_end, y_end), (0, 255, 0), 2)
+        # cv2.rectangle(out_img, (leftx_start, y_start), (leftx_end, y_end), (0, 255, 0), 2)
+        # cv2.rectangle(out_img, (rightx_start, y_start), (rightx_end, y_end), (0, 255, 0), 2)
 
         # extract nonzero pixels in windows
         left_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= leftx_start) & (nonzero_x < leftx_end)).nonzero()[0]
@@ -140,7 +153,7 @@ def base_lane_lines(image):
     right_x = nonzero_x[right_lane_indices]
     right_y = nonzero_y[right_lane_indices]
 
-    return left_x, left_y, right_x, right_y, out_img
+    return left_x, left_y, right_x, right_y, car_center, lane_center
 
 def fit_poly(img_shape, leftx, lefty, rightx, righty):
 
@@ -163,10 +176,6 @@ def fit_poly(img_shape, leftx, lefty, rightx, righty):
     return left_fit, right_fit, left_fitx, right_fitx, y
 
 # def prior_frame_search(warped, margin):
-
-def prior_frame_search(warped, margin):
-    
-
 
 if __name__ == "__main__":
 

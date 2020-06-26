@@ -12,7 +12,7 @@ class Line():
         # whether the line was detected in the previous time-step
         self.detected = False
 
-        # x vals of the most recent n line fits
+        # x vals of the last n fits of the line
         self.recent_xfitted = []
 
         # avg x vals from the last n fits
@@ -155,6 +155,27 @@ def base_lane_lines(image):
 
     return left_x, left_y, right_x, right_y, car_center, lane_center
 
+def prior_frame_search(warped, margin, left_fit, right_fit):
+
+    _, _, car_center, lane_center = histogram_peaks(warped)
+
+    nonzero = warped.nonzero()
+    nonzerox = np.array(nonzero[1])
+    nonzeroy = np.array(nonzero[0])
+
+    poly_left = nonzeroy ** 2 * left_fit[0]  + nonzeroy * left_fit[1] + left_fit[2]
+    poly_right = nonzeroy ** 2 * right_fit[0] + nonzeroy * right_fit[1] + right_fit[2]
+
+    left_lane_inds = ((nonzerox >= poly_left - margin) & (nonzerox < poly_left + margin))
+    right_lane_inds = ((nonzerox >= poly_right - margin) & (nonzerox < poly_right + margin))
+
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds]
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
+
+    return leftx, lefty, rightx, righty, car_center, lane_center
+
 def fit_poly(img_shape, leftx, lefty, rightx, righty):
 
     # leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
@@ -174,8 +195,6 @@ def fit_poly(img_shape, leftx, lefty, rightx, righty):
     # plt.plot(right_fitx, y, color = "yellow")
 
     return left_fit, right_fit, left_fitx, right_fitx, y
-
-# def prior_frame_search(warped, margin):
 
 if __name__ == "__main__":
 

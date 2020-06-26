@@ -33,14 +33,53 @@ def offset(car_center, lane_center):
 
     xm_per_pix = 3.7 / 700
 
+    return round((lane_center - car_center) * xm_per_pix, 2)
+
+def draw_lane_lines(image, undist, warped, left_fitx, right_fitx, y, M_inv, car_center, lane_center, left_curve, right_curve):
+
+    warp_zero = np.zeros_like(warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+
+    points_left = np.array([np.transpose(np.vstack([left_fitx, y]))])
+    points_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, y])))])
+    points = np.hstack((points_left, points_right))
+
+    cv2.fillPoly(color_warp, np.int_([points]), (0, 255, 0))
+
+    new_warp = cv2.warpPerspective(color_warp, M_inv, (image.shape[1], image.shape[0]))
+
+    result = cv2.addWeighted(undist, 1, new_warp, 0.3, 0)
+
     if lane_center - car_center > 0:
-        return "{}m left of center".format(round((lane_center - car_center) * xm_per_pix, 2))
+        offset_text = "{}m left of center".format(offset(car_center, lane_center))
 
     elif lane_center - car_center < 0:
-        return "{}m right of center".format(round((lane_center - car_center) * -xm_per_pix, 2))
+        offset_text = "{}m right of center".format(-offset(car_center, lane_center))
 
     else:
-        return "centered"
+        offset_text = "centered"
+
+    cv2.putText(
+        result, 
+        "Radius of Curvature: {}m".format(round(min(left_curve, right_curve), 1)), 
+        (100, 100), 
+        cv2.FONT_HERSHEY_COMPLEX, # use complex
+        1, 
+        (0, 255, 0), 
+        2
+    )
+
+    cv2.putText(
+        result, 
+        "Vehicle is {}".format(offset_text), 
+        (100, 150), 
+        cv2.FONT_HERSHEY_COMPLEX, 
+        1, 
+        (0, 255, 0), 
+        2
+    )
+
+    return result
 
 def draw_lines(image, polygon):
 

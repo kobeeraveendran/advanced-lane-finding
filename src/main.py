@@ -9,8 +9,8 @@ from moviepy.editor import VideoFileClip
 import os
 
 from calibrate_camera import extract_points, camera_cal
-from helper import perspective_transform, draw_lines, curvature, offset
-from detection import threshold, base_lane_lines, fit_poly
+from helper import perspective_transform, curvature, draw_lane_lines, offset
+from detection import threshold, base_lane_lines, fit_poly, prior_frame_search
 from detection import Line
 
 # for one image
@@ -23,51 +23,43 @@ def find_lane_lines(image):
 
     warped, M, M_inv = perspective_transform(thresholded, mtx, dist, src, dest)
 
-    # if not (left_lane_line.detected or right_lane_line.detected):
-    #     leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
-    #     left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
+    plt.imshow(thresholded, cmap = "gray")
+    plt.show()
 
-    #     left_curve, right_curve = curvature(left_fit, right_fit, y)
-
+    #if not (left_lane_line.detected or right_lane_line.detected):
     leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
     left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
 
+    # print(left_fit)
+    # print(right_fit)
+
+    # update Line objects
+    # left_lane_line.detected = True
+    # right_lane_line.detected = True
+
+    if abs(offset(car_center, lane_center)) > 0.35:
+
+        leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
+        left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
+
+    # sanity checks
+    #if abs(lane_center - car_center) > 0.3:
+
+
     left_curve, right_curve = curvature(left_fit, right_fit, y)
 
-    warp_zero = np.zeros_like(warped).astype(np.uint8)
-    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    # update Line objects
+    left_lane_line.current_fit = left_fit
+    right_lane_line.current_fit = right_fit
+    left_lane_line.radius_of_curvature = left_curve
+    right_lane_line.radius_of_curvature = right_curve
 
-    points_left = np.array([np.transpose(np.vstack([left_fitx, y]))])
-    points_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, y])))])
-    points = np.hstack((points_left, points_right))
+    # leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
+    # left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
 
-    cv2.fillPoly(color_warp, np.int_([points]), (0, 255, 0))
+    # left_curve, right_curve = curvature(left_fit, right_fit, y)
 
-    new_warp = cv2.warpPerspective(color_warp, M_inv, (image.shape[1], image.shape[0]))
-
-    result = cv2.addWeighted(undist, 1, new_warp, 0.3, 0)
-
-    offset_text = offset(car_center, lane_center)
-
-    cv2.putText(
-        result, 
-        "Radius of Curvature: {}m".format(round(min(left_curve, right_curve), 1)), 
-        (100, 100), 
-        cv2.FONT_HERSHEY_COMPLEX, # use complex
-        1, 
-        (0, 255, 0), 
-        2
-    )
-
-    cv2.putText(
-        result, 
-        "Vehicle is {}".format(offset_text), 
-        (100, 150), 
-        cv2.FONT_HERSHEY_COMPLEX, 
-        1, 
-        (0, 255, 0), 
-        2
-    )
+    result = draw_lane_lines(image, undist, warped, left_fitx, right_fitx, y, M_inv, car_center, lane_center, left_curve, right_curve)
 
     #plt.imshow(warped, cmap = "gray")
     # plt.imshow(result)
@@ -99,20 +91,29 @@ if __name__ == "__main__":
         [894, 719]  # bottom right
     ])
 
-    # for image in glob.glob("../test_images/*.jpg"):
-    #     image = mpimg.imread(image)
+    for image in glob.glob("../test_images/*.jpg"):
+        image = mpimg.imread(image)
 
-    #     left_lane_line = Line()
-    #     right_lane_line = Line()
+        left_lane_line = Line()
+        right_lane_line = Line()
 
-    #     #result = find_lane_lines(image, left_lane_line, right_lane_line)
-    #     result = find_lane_lines(image)
+        #result = find_lane_lines(image, left_lane_line, right_lane_line)
+        result = find_lane_lines(image)
 
-    os.makedirs("../output_videos/", exist_ok = True)
+        plt.imshow(result)
+        plt.show()
+
+
+    # begin comment (for video generation)
+    # left_lane_line = Line()
+    # right_lane_line = Line()
+
+    # os.makedirs("../output_videos/", exist_ok = True)
     
-    input_vid = VideoFileClip("../project_video.mp4")
-    process_clip = input_vid.fl_image(find_lane_lines)
-    process_clip.write_videofile("../output_videos/project_video_output.mp4", audio = False)
+    # input_vid = VideoFileClip("../project_video.mp4")
+    # process_clip = input_vid.fl_image(find_lane_lines)
+    # process_clip.write_videofile("../output_videos/project_video_output.mp4", audio = False)
+    # end video generation comment
 
     # image = mpimg.imread("../test_images/straight_lines1.jpg")
 

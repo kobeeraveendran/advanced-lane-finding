@@ -21,8 +21,10 @@ def curvature(left_fit, right_fit, y):
     ym_per_pix = 30 / 720
     #ym_per_pix = 3 / 200
 
-    y_eval = np.max(y)
+    y_eval = 456
+    #print(y_eval)
     y_eval *= ym_per_pix
+    #y_eval = 500
 
     left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** (3/2)) / abs(2 * left_fit[0])
     right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** (3/2)) / abs(2 * right_fit[0])
@@ -63,7 +65,7 @@ def draw_lane_lines(image, undist, warped, left_fitx, right_fitx, y, M_inv, car_
         result, 
         "Radius of Curvature: {}m".format(round(min(left_curve, right_curve), 1)), 
         (100, 100), 
-        cv2.FONT_HERSHEY_COMPLEX, # use complex
+        cv2.FONT_HERSHEY_COMPLEX, 
         1, 
         (0, 255, 0), 
         2

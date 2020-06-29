@@ -27,8 +27,8 @@ class Line():
         # radius of curvature of the line
         self.radius_of_curvature = None
 
-        # offset from line to vehicle center
-        self.offset = None
+        # line position in image (differs a bit from the suggested class def)
+        self.line_base_pos = None
 
         # diff between prev and current line of best fit coefficients
         self.diffs = np.array([0, 0, 0], dtype = 'float')
@@ -71,10 +71,26 @@ def threshold(image):
     combined_binary = np.zeros_like(sobelx_binary)
     combined_binary[(s_binary == 1) | (sobelx_binary == 1)] = 1
 
+    # generate region of interest mask
+    vertices = np.array([[(0, combined_binary.shape[0]), (550, 456), (730, 456), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
+    #vertices = np.array([[(0, combined_binary.shape[0]), (570, 456), (740, 456), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
+    #vertices = np.array([[(0, combined_binary.shape[0]), (combined_binary.shape[1] // 2, combined_binary.shape[0] // 2), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
+    #vertices = np.array([[(0, 678), (585, 456), (698, 456), (combined_binary.shape[1], 678)]], dtype = np.int32)
+    mask = np.zeros_like(combined_binary)
+
+    if len(combined_binary.shape) > 2:
+        ignore_mask_color = (255,) * combined_binary.shape[2]
+    else:
+        ignore_mask_color = 255
+
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+
+    masked_combined_binary = cv2.bitwise_and(combined_binary, mask)
+
     # plt.imshow(combined_binary, cmap = "gray")
     # plt.show()
 
-    return combined_binary
+    return masked_combined_binary
 
 def histogram_peaks(image):
     hist = np.sum(image[image.shape[0] // 2:, :], axis = 0)
@@ -87,18 +103,20 @@ def histogram_peaks(image):
 
     return left_base, right_base, car_center, lane_center
 
-def base_lane_lines(image):
+def sliding_window(image, left_lane_line, right_lane_line):
 
     #plt.imshow(image, cmap = "gray")
 
-    # histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
+    histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
 
-    # #out_img = np.dstack((image, image, image))
+    out_img = np.dstack((image, image, image))
 
-    # # identify x coord of left and right lane lines
-    # mid = np.int(histogram.shape[0] // 2)
-    # left_base = np.argmax(histogram[:mid])
-    # right_base = np.argmax(histogram[mid:]) + mid
+    # identify x coord of left and right lane lines
+    mid = np.int(histogram.shape[0] // 2)
+    left_base = np.argmax(histogram[:mid])
+    right_base = np.argmax(histogram[mid:]) + mid
+
+    ############## end comment
 
     left_base, right_base, car_center, lane_center = histogram_peaks(image)
 
@@ -129,8 +147,8 @@ def base_lane_lines(image):
         y_start = image.shape[0] - (window + 1) * win_height
         y_end = image.shape[0] - window * win_height
 
-        # cv2.rectangle(out_img, (leftx_start, y_start), (leftx_end, y_end), (0, 255, 0), 2)
-        # cv2.rectangle(out_img, (rightx_start, y_start), (rightx_end, y_end), (0, 255, 0), 2)
+        cv2.rectangle(out_img, (leftx_start, y_start), (leftx_end, y_end), (0, 255, 0), 2)
+        cv2.rectangle(out_img, (rightx_start, y_start), (rightx_end, y_end), (0, 255, 0), 2)
 
         # extract nonzero pixels in windows
         left_inds = ((nonzero_y >= y_start) & (nonzero_y < y_end) & (nonzero_x >= leftx_start) & (nonzero_x < leftx_end)).nonzero()[0]
@@ -153,7 +171,10 @@ def base_lane_lines(image):
     right_x = nonzero_x[right_lane_indices]
     right_y = nonzero_y[right_lane_indices]
 
-    return left_x, left_y, right_x, right_y, car_center, lane_center
+    left_lane_line.detected = True
+    
+
+    return left_x, left_y, right_x, right_y, car_center, lane_center, out_img
 
 def prior_frame_search(warped, margin, left_fit, right_fit):
 
@@ -176,7 +197,7 @@ def prior_frame_search(warped, margin, left_fit, right_fit):
 
     return leftx, lefty, rightx, righty, car_center, lane_center
 
-def fit_poly(img_shape, leftx, lefty, rightx, righty):
+def fit_poly(img_shape, leftx, lefty, rightx, righty, out_img):
 
     # leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
 
@@ -188,13 +209,13 @@ def fit_poly(img_shape, leftx, lefty, rightx, righty):
     left_fitx = left_fit[0] * y ** 2 + left_fit[1] * y + left_fit[2]
     right_fitx = right_fit[0] * y ** 2 + right_fit[1] * y + right_fit[2]
 
-    # out_img[lefty, leftx] = [255, 0, 0]
-    # out_img[righty, rightx] = [0, 0, 255]
+    out_img[lefty, leftx] = [255, 0, 0]
+    out_img[righty, rightx] = [0, 0, 255]
 
-    # plt.plot(left_fitx, y, color = "yellow")
-    # plt.plot(right_fitx, y, color = "yellow")
+    plt.plot(left_fitx, y, color = "yellow")
+    plt.plot(right_fitx, y, color = "yellow")
 
-    return left_fit, right_fit, left_fitx, right_fitx, y
+    return left_fit, right_fit, left_fitx, right_fitx, y, out_img
 
 if __name__ == "__main__":
 

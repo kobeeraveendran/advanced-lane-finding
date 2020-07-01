@@ -3,3 +3,4 @@ __pycache__
 undistorted/
 figures/
 output_videos/
+.ipynb_checkpoints/

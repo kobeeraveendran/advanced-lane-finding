@@ -63,7 +63,7 @@ def threshold(image):
     # plt.show()
 
     s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= 170) & (s_channel <= 255)] = 1
+    s_binary[(s_channel >= 100) & (s_channel <= 255)] = 1
     
     # plt.imshow(s_binary, cmap = "gray")
     # plt.show()
@@ -172,7 +172,7 @@ def sliding_window(image, left_lane_line, right_lane_line):
     right_y = nonzero_y[right_lane_indices]
 
     left_lane_line.detected = True
-    
+
 
     return left_x, left_y, right_x, right_y, car_center, lane_center, out_img
 

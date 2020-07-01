@@ -49,7 +49,7 @@ def find_lane_lines(image):
     left_curve, right_curve = curvature(left_fit, right_fit, y)
 
     if left_curve < 1000 or right_curve < 1000:
-        leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
+        #leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
         left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
         left_curve, right_curve = curvature(left_fit, right_fit, y)
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     
     input_vid = VideoFileClip("../project_video.mp4")
     process_clip = input_vid.fl_image(find_lane_lines)
-    process_clip.write_videofile("../output_videos/project_video_output_new.mp4", audio = False)
+    process_clip.write_videofile("../output_videos/project_video_output_curvetest.mp4", audio = False)
     # end video generation comment
 
     # image = mpimg.imread("../test_images/straight_lines1.jpg")

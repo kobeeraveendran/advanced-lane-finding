@@ -18,6 +18,7 @@ def perspective_transform(image, mtx, dist, src, dest):
 
 def curvature(left_fit, right_fit, y):
 
+    xm_per_pix = 3.7 / 700
     ym_per_pix = 30 / 720
     #ym_per_pix = 3 / 200
 
@@ -25,6 +26,9 @@ def curvature(left_fit, right_fit, y):
     #print(y_eval)
     y_eval *= ym_per_pix
     #y_eval = 500
+
+    left_fit *= xm_per_pix
+    right_fit *= xm_per_pix
 
     left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** (3/2)) / abs(2 * left_fit[0])
     right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** (3/2)) / abs(2 * right_fit[0])

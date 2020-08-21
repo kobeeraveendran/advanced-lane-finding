@@ -36,15 +36,13 @@ def find_lane_lines(image):
     # left_lane_line.detected = True
     # right_lane_line.detected = True
 
-    if abs(offset(car_center, lane_center)) > 0.3:
+    # if abs(offset(car_center, lane_center)) > 0.3:
 
-        leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
+    leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
     
     left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
 
     # sanity checks
-    #if abs(lane_center - car_center) > 0.3:
-
 
     left_curve, right_curve = curvature(left_fit, right_fit, y)
 

@@ -15,8 +15,8 @@ def extract_points(images):
         - images: list of strings containing the filenames of the calibration image set
     
     returns:
-        - obj_points: list of points in 3-D; i.e. in real-world space
-        - img_points: list of points in 2d; i.e. in planar image space
+        - mtx: camera calibration matrix
+        - dist: distortion coefficients
     '''
 
     obj = np.zeros((6 * 9, 3), np.float32)
@@ -51,16 +51,12 @@ def camera_cal(filename, mtx, dist):
 
     '''
     args:
-        - image: grayscale image (converted from the BGR original)
-        - obj_points: list of points in 3-D; i.e. in real-world space
-        - img_points: list of points in 2d; i.e. in planar image space
+        - filename: filename (paths also accepted)
+        - mtx: camera matrix from `extract_points()`, or loaded from saved file
+        - dist: distortion coefficients from `extract_points()`, or loaded from saved file
 
     returns:
-        - ret: bool
-        - mtx: camera matrix
-        - dist: distortion coefficients
-        - rvecs: rotation vectors
-        - tvecs: translation vectors
+        - dst: undistorted image
     '''
 
     split = filename.split('.')

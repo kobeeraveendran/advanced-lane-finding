@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import glob
 
 import sys
@@ -47,7 +48,7 @@ def extract_points(images):
     return mtx, dist
 
 
-def camera_cal(filename, mtx, dist):
+def camera_cal(filename, mtx, dist, save = False):
 
     '''
     args:
@@ -59,17 +60,16 @@ def camera_cal(filename, mtx, dist):
         - dst: undistorted image
     '''
 
-    split = filename.split('.')
-
-    new_filename = filename.split('.')[-2].split('/')[-1]
-
-    image = cv2.imread(filename)
+    image = mpimg.imread(filename)
 
     # undistort image
     dst = cv2.undistort(image, mtx, dist, None, mtx)
 
     # write to new image for checking purposes
-    cv2.imwrite("../undistorted/{}_undist.{}".format(new_filename, split[-1]), dst)
+    if save:
+        split = filename.split('.')
+        new_filename = filename.split('.')[-2].split('/')[-1]
+        cv2.imwrite("../undistorted/{}_undist.{}".format(new_filename, split[-1]), dst)
 
     return dst
 

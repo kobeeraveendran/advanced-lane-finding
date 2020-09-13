@@ -14,13 +14,10 @@ from detection import threshold, sliding_window, fit_poly, prior_frame_search
 from detection import Line
 
 # for one image
-#def find_lane_lines(image, left_lane_line, right_lane_line):
-def find_lane_lines(image):
+def lanefinding_pipeline(image, left_lane_line, right_lane_line):
+#def find_lane_lines(image):
 
-    global prev_car_center
-    global prev_lane_center
-
-    undist = cv2.undistort(image, mtx, dist)
+    undist = camera_cal(image, mtx, dist)
 
     thresholded = threshold(undist)
 
@@ -126,25 +123,26 @@ if __name__ == "__main__":
 
 
     # begin comment (for video generation)
-    left_lane_line = Line()
-    right_lane_line = Line()
-
-    prev_car_center = None
-    prev_lane_center = None
-
-    os.makedirs("../output_videos/", exist_ok = True)
-    
-    input_vid = VideoFileClip("../project_video.mp4")
-    process_clip = input_vid.fl_image(find_lane_lines)
-    process_clip.write_videofile("../output_videos/project_video_output_curvetest.mp4", audio = False)
-    # end video generation comment
-
-    # image = mpimg.imread("../test_images/straight_lines1.jpg")
-
     # left_lane_line = Line()
     # right_lane_line = Line()
 
-    # result = find_lane_lines(image, left_lane_line, right_lane_line)
+    # prev_car_center = None
+    # prev_lane_center = None
+
+    # os.makedirs("../output_videos/", exist_ok = True)
+    
+    # input_vid = VideoFileClip("../project_video.mp4")
+    # process_clip = input_vid.fl_image(find_lane_lines)
+    # process_clip.write_videofile("../output_videos/project_video_output_curvetest.mp4", audio = False)
+    # end video generation comment
+
+    #image = mpimg.imread("../test_images/straight_lines1.jpg")
+    image = "../test_images/straight_lines1.jpg"
+
+    left_lane_line = Line()
+    right_lane_line = Line()
+
+    result = find_lane_lines(image, left_lane_line, right_lane_line)
 
     # plt.imshow(image)
     # plt.show()
@@ -152,8 +150,8 @@ if __name__ == "__main__":
     # plt.imshow(result, cmap = "gray")
     # plt.show()
 
-    # cv2.imshow("Original", image)
-    # cv2.waitKey()
+    cv2.imshow("Original", image)
+    cv2.waitKey()
 
-    # cv2.imshow("Result", result)
-    # cv2.waitKey()
+    cv2.imshow("Result", result)
+    cv2.waitKey()

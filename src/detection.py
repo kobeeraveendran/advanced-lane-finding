@@ -9,7 +9,7 @@ class Line():
 
     def __init__(self):
 
-        # whether the line was detected in the previous time-step
+        # whether the line was detected in the previous frame
         self.detected = False
 
         # x vals of the last n fits of the line
@@ -21,36 +21,41 @@ class Line():
         # polynomial coeffs avg'd from last n fits
         self.best_fit = None
 
-        # polynomial coeffs from the last fit
+        # polynomial coeffs from previous fit
+        self.prev_fit = [np.array([False])]
+
+        # x and y vals from the current and previous detections
+        self.x = None
+        self.y = None
+        self.prev_x = None
+        self.prev_y = None
+
+        # x and y fits from current and previous poly. fit
+        self.fit_x = None
+        self.fit_y = None
+        self.prev_fit_x = None
+        self.prev_fit_y = None
+
+        # polynomial coeffs of current fit
         self.current_fit = [np.array([False])]
 
         # radius of curvature of the line
         self.radius_of_curvature = None
 
-        # line position in image (differs a bit from the suggested class def)
+        # line position in image (not the distance from line to car as suggested; this will later be calculated using the base pos of L+R lane lines)
         self.line_base_pos = None
 
         # diff between prev and current line of best fit coefficients
         self.diffs = np.array([0, 0, 0], dtype = 'float')
 
-        # x values of detected line pixels
-        self.all_x = None
-
-        # y values of detected line pixels
-        self.all_y = None
-
         
 
 def threshold(image):
-
     # convert to HLS color space
-    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
 
     s_channel = hls[:, :, 2]
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # plt.imshow(gray, cmap = "gray")
-    # plt.show()
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
     abs_sobel_x = np.absolute(sobel_x)
@@ -59,23 +64,14 @@ def threshold(image):
     sobelx_binary = np.zeros_like(scaled_sobel)
     sobelx_binary[(scaled_sobel >= 20) & (scaled_sobel <= 100)] = 1
 
-    # plt.imshow(sobelx_binary, cmap = "gray")
-    # plt.show()
-
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= 100) & (s_channel <= 255)] = 1
-    
-    # plt.imshow(s_binary, cmap = "gray")
-    # plt.show()
 
     combined_binary = np.zeros_like(sobelx_binary)
     combined_binary[(s_binary == 1) | (sobelx_binary == 1)] = 1
 
     # generate region of interest mask
     vertices = np.array([[(0, combined_binary.shape[0]), (550, 456), (730, 456), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
-    #vertices = np.array([[(0, combined_binary.shape[0]), (570, 456), (740, 456), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
-    #vertices = np.array([[(0, combined_binary.shape[0]), (combined_binary.shape[1] // 2, combined_binary.shape[0] // 2), (combined_binary.shape[1], combined_binary.shape[0])]], dtype = np.int32)
-    #vertices = np.array([[(0, 678), (585, 456), (698, 456), (combined_binary.shape[1], 678)]], dtype = np.int32)
     mask = np.zeros_like(combined_binary)
 
     if len(combined_binary.shape) > 2:
@@ -86,9 +82,6 @@ def threshold(image):
     cv2.fillPoly(mask, vertices, ignore_mask_color)
 
     masked_combined_binary = cv2.bitwise_and(combined_binary, mask)
-
-    # plt.imshow(combined_binary, cmap = "gray")
-    # plt.show()
 
     return masked_combined_binary
 
@@ -104,21 +97,15 @@ def histogram_peaks(image):
     return left_base, right_base, car_center, lane_center
 
 def sliding_window(image, left_lane_line, right_lane_line):
-
-    #plt.imshow(image, cmap = "gray")
-
     histogram = np.sum(image[image.shape[0] // 2:, :], axis = 0)
 
     out_img = np.dstack((image, image, image))
 
-    # identify x coord of left and right lane lines
     mid = np.int(histogram.shape[0] // 2)
     left_base = np.argmax(histogram[:mid])
     right_base = np.argmax(histogram[mid:]) + mid
-
-    ############## end comment
-
-    left_base, right_base, car_center, lane_center = histogram_peaks(image)
+    car_center = mid
+    lane_center = (left_base + right_base) // 2
 
     # set up sliding window procedure
     num_windows = 9
@@ -172,9 +159,21 @@ def sliding_window(image, left_lane_line, right_lane_line):
     right_y = nonzero_y[right_lane_indices]
 
     left_lane_line.detected = True
+    right_lane_line.detected = True
 
+    left_lane_line.prev_x = left_lane_line.x
+    left_lane_line.x =  left_x
+    left_lane_line.prev_y = left_lane_line.y
+    left_lane_line.y =  left_y
 
-    return left_x, left_y, right_x, right_y, car_center, lane_center, out_img
+    right_lane_line.prev_x = right_lane_line.x
+    right_lane_line.x = right_x
+    right_lane_line.prev_y = right_lane_line.y
+    right_lane_line.y = right_y
+
+    left_lane_line, right_lane_line, y, out_img = fit_poly(image.shape, left_lane_line, right_lane_line, out_img)
+
+    return left_lane_line, right_lane_line, car_center, lane_center, y, out_img
 
 def prior_frame_search(warped, margin, left_fit, right_fit):
 
@@ -197,25 +196,33 @@ def prior_frame_search(warped, margin, left_fit, right_fit):
 
     return leftx, lefty, rightx, righty, car_center, lane_center
 
-def fit_poly(img_shape, leftx, lefty, rightx, righty, out_img):
+# fit the detected lane pixels a polynomial
+def fit_poly(img_shape, left_lane_line, right_lane_line, out_img):
 
-    # leftx, lefty, rightx, righty, out_img = base_lane_lines(warped_image)
+    left_fit = np.polyfit(left_lane_line.y, left_lane_line.x, deg = 2)
+    right_fit = np.polyfit(right_lane_line.y, right_lane_line.x, deg = 2)
 
-    left_fit = np.polyfit(lefty, leftx, deg = 2)
-    right_fit = np.polyfit(righty, rightx, deg = 2)
-    
     y = np.linspace(0, img_shape[0] - 1, img_shape[0])
 
     left_fitx = left_fit[0] * y ** 2 + left_fit[1] * y + left_fit[2]
     right_fitx = right_fit[0] * y ** 2 + right_fit[1] * y + right_fit[2]
 
-    out_img[lefty, leftx] = [255, 0, 0]
-    out_img[righty, rightx] = [0, 0, 255]
+    out_img[left_lane_line.y, left_lane_line.x] = [255, 0, 0]
+    out_img[right_lane_line.y, right_lane_line.x] = [0, 0, 255]
 
-    plt.plot(left_fitx, y, color = "yellow")
-    plt.plot(right_fitx, y, color = "yellow")
+    left_lane_line.prev_fit_x = left_lane_line.fit_x
+    left_lane_line.fit_x = left_fit
 
-    return left_fit, right_fit, left_fitx, right_fitx, y, out_img
+    right_lane_line.prev_fit_x = right_lane_line.fit_x
+    right_lane_line.fit_x = right_fit
+
+    left_lane_line.current_fit.append(left_fit)
+    right_lane_line.current_fit.append(right_fit)
+
+    left_lane_line.fit_y = y
+    right_lane_line.fit_y = y
+
+    return left_lane_line, right_lane_line, y, out_img
 
 if __name__ == "__main__":
 

@@ -48,7 +48,7 @@ def extract_points(images):
     return mtx, dist
 
 
-def camera_cal(filename, mtx, dist, save = False):
+def camera_cal(image, mtx, dist, filename = None, save = False):
 
     '''
     args:
@@ -59,8 +59,9 @@ def camera_cal(filename, mtx, dist, save = False):
     returns:
         - dst: undistorted image
     '''
-
-    image = mpimg.imread(filename)
+    if filename:
+        image = mpimg.imread(filename)
+        
 
     # undistort image
     dst = cv2.undistort(image, mtx, dist, None, mtx)

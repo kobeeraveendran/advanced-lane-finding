@@ -225,13 +225,16 @@ def fit_poly(img_shape, left_lane_line, right_lane_line, out_img):
     out_img[right_lane_line.y, right_lane_line.x] = [0, 0, 255]
 
     left_lane_line.prev_fit_x = left_lane_line.fit_x
-    left_lane_line.fit_x = left_fit
+    left_lane_line.fit_x = left_fitx
 
     right_lane_line.prev_fit_x = right_lane_line.fit_x
-    right_lane_line.fit_x = right_fit
+    right_lane_line.fit_x = right_fitx
 
-    left_lane_line.current_fit.append(left_fit)
-    right_lane_line.current_fit.append(right_fit)
+    left_lane_line.current_fit = left_fit
+    right_lane_line.current_fit = right_fit
+
+    # plt.plot(left_fitx, y, color = "yellow")
+    # plt.plot(right_fitx, y, color = "yellow")
 
     left_lane_line.fit_y = y
     right_lane_line.fit_y = y

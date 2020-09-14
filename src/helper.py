@@ -22,16 +22,16 @@ def perspective_transform(image, mtx, dist, src, dest):
 #     ym_per_pix = 30 / 720
 #     #ym_per_pix = 3 / 200
 
-#     y_eval = 456
-#     #print(y_eval)
-#     y_eval *= ym_per_pix
-#     #y_eval = 500
+#     y_eval = np.max(y) * ym_per_pix
+
+#     #left_fit = np.polyfit(y, left_fit, 2)
+#     #right_fit = np.polyfit(y, right_fit, 2)
 
 #     left_fit *= xm_per_pix
 #     right_fit *= xm_per_pix
 
-#     left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** (3/2)) / abs(2 * left_fit[0])
-#     right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** (3/2)) / abs(2 * right_fit[0])
+#     left_curverad = ((1 + (2*left_fit[0]*y_eval + left_fit[1])**2)**1.5) / np.absolute(2*left_fit[0])
+#     right_curverad = ((1 + (2*right_fit[0]*y_eval + right_fit[1])**2)**1.5) / np.absolute(2*right_fit[0])
 
 #     return left_curverad, right_curverad
 
@@ -41,10 +41,11 @@ def curvature(fit_x, fit_y):
     ym_per_pix = 30 / 720
 
     y_eval = 456 * ym_per_pix
+    # y_eval = np.max(fit_y)
 
     fit_rw = np.polyfit(fit_y * ym_per_pix, fit_x * xm_per_pix, 2)
 
-    curve_rad = ((1 + (2*fit_rw[0]*y_eval + fit_rw[1])**2)**1.5) / np.absolute(2*fit_rw[0])
+    curve_rad = ((1 + (2*fit_rw[0]*y_eval*ym_per_pix + fit_rw[1])**2)**1.5) / np.absolute(2*fit_rw[0])
 
     return curve_rad
 

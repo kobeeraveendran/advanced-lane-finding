@@ -14,6 +14,14 @@ from helper import perspective_transform, curvature, draw_lines, draw_lane_lines
 from detection import threshold, sliding_window, fit_poly, prior_frame_search
 from detection import Line
 
+def pipeline_wrapper(image):
+    left_lane_line = Line()
+    right_lane_line = Line()
+
+    result = lanefinding_pipeline(image, left_lane_line, right_lane_line)
+
+    return result
+
 # for one image
 def lanefinding_pipeline(image, left_lane_line, right_lane_line):
 #def find_lane_lines(image):
@@ -43,11 +51,11 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
     # sanity checks
 
     # left_curve, right_curve = curvature(left_lane_line.fit_x, right_lane_line.fit_x, y)
-    print("Left lane fitx: ", len(left_lane_line.fit_x))
-    print("Left lane fity: ", len(left_lane_line.y))
-    curverad = curvature(left_lane_line.fit_x, y)
-    print(curverad)
-    sys.exit()
+    # curverad = curvature(left_lane_line.fit_x, left_lane_line.fit_y)
+    #left_curve, right_curve = curvature(left_lane_line.fit_x, right_lane_line.fit_x, y)
+    left_curve = curvature(left_lane_line.fit_x, left_lane_line.fit_y)
+    right_curve = curvature(right_lane_line.fit_x, right_lane_line.fit_y)
+    # print(left_curve, right_curve)
     
     # if left_curve < 1000 or right_curve < 1000:
     #     #leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
@@ -80,8 +88,6 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
 
     # draw_copy = np.copy(result)
 
-    # draw_lines(draw_copy, np.float32([[0, thresholded.shape[0]], [555, 456], [725, 456], [thresholded.shape[1], thresholded.shape[0]]]))
-
     # plt.imshow(draw_copy)
     # plt.show()
 
@@ -89,10 +95,6 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
     # plt.imshow(result)
     
     # plt.show()
-
-    plt.imshow(result)
-    plt.show()
-    sys.exit()
 
     return result
 
@@ -133,35 +135,30 @@ if __name__ == "__main__":
 
 
     # begin comment (for video generation)
+
+    prev_car_center = None
+    prev_lane_center = None
+
+    os.makedirs("../output_videos/", exist_ok = True)
+    
+    input_vid = VideoFileClip("../project_video.mp4")
+    process_clip = input_vid.fl_image(pipeline_wrapper)
+    process_clip.write_videofile("../output_videos/project_video_output_curvetest1.mp4", audio = False)
+    # end video generation comment
+
+    # image = mpimg.imread("../test_images/test2.jpg")
+    # #image = "../test_images/test2.jpg"
+
     # left_lane_line = Line()
     # right_lane_line = Line()
 
-    # prev_car_center = None
-    # prev_lane_center = None
+    # result = lanefinding_pipeline(image, left_lane_line, right_lane_line)
 
-    # os.makedirs("../output_videos/", exist_ok = True)
-    
-    # input_vid = VideoFileClip("../project_video.mp4")
-    # process_clip = input_vid.fl_image(find_lane_lines)
-    # process_clip.write_videofile("../output_videos/project_video_output_curvetest.mp4", audio = False)
-    # end video generation comment
-
-    #image = mpimg.imread("../test_images/straight_lines1.jpg")
-    image = "../test_images/straight_lines1.jpg"
-
-    left_lane_line = Line()
-    right_lane_line = Line()
-
-    result = lanefinding_pipeline(image, left_lane_line, right_lane_line)
+    # plt.imshow(result)
+    # plt.show()
 
     # plt.imshow(image)
     # plt.show()
     
     # plt.imshow(result, cmap = "gray")
     # plt.show()
-
-    cv2.imshow("Original", image)
-    cv2.waitKey()
-
-    cv2.imshow("Result", result)
-    cv2.waitKey()

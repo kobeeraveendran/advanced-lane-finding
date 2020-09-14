@@ -1,6 +1,4 @@
 ## Advanced Lane Finding
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-![Lanes Image](./examples/example_output.jpg)
 
 This program is part of a project in the Udacity SDC nanodegree and part of my research at UCF. The goal of the program is to be a robust pipeline for detecting lane lines, calculating vehicle offset from the center of the lane, determining the road's curvature, and eventually predicting the steering angle of the vehicle. Below are the steps used to process the input video before it is finally returned (in a separate video file), complete with drawn lane markings and other useful information.
 

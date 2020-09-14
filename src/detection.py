@@ -175,8 +175,10 @@ def sliding_window(image, left_lane_line, right_lane_line):
 
     return left_lane_line, right_lane_line, car_center, lane_center, y, out_img
 
-def prior_frame_search(warped, margin, left_fit, right_fit):
+def prior_frame_search(warped, margin, left_lane_line, right_lane_line):
 
+    left_fit = left_lane_line.fit_x
+    right_fit = right_lane_line.fit_x
     _, _, car_center, lane_center = histogram_peaks(warped)
 
     nonzero = warped.nonzero()
@@ -194,7 +196,19 @@ def prior_frame_search(warped, margin, left_fit, right_fit):
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
 
-    return leftx, lefty, rightx, righty, car_center, lane_center
+    left_lane_line.prev_x = left_lane_line.x
+    left_lane_line.x = leftx
+    left_lane_line.prev_y = left_lane_line.y
+    left_lane_line.y = lefty
+
+    right_lane_line.prev_x = right_lane_line.x
+    right_lane_line.x = rightx
+    right_lane_line.prev_y = right_lane_line.y
+    right_lane_line.y = righty
+
+    left_lane_line, right_lane_line, y, out_img = fit_poly(warped.shape, left_lane_line, right_lane_line, out_img)
+
+    return left_lane_line, right_lane_line, car_center, lane_center
 
 # fit the detected lane pixels a polynomial
 def fit_poly(img_shape, left_lane_line, right_lane_line, out_img):
@@ -211,13 +225,16 @@ def fit_poly(img_shape, left_lane_line, right_lane_line, out_img):
     out_img[right_lane_line.y, right_lane_line.x] = [0, 0, 255]
 
     left_lane_line.prev_fit_x = left_lane_line.fit_x
-    left_lane_line.fit_x = left_fit
+    left_lane_line.fit_x = left_fitx
 
     right_lane_line.prev_fit_x = right_lane_line.fit_x
-    right_lane_line.fit_x = right_fit
+    right_lane_line.fit_x = right_fitx
 
-    left_lane_line.current_fit.append(left_fit)
-    right_lane_line.current_fit.append(right_fit)
+    left_lane_line.current_fit = left_fit
+    right_lane_line.current_fit = right_fit
+
+    # plt.plot(left_fitx, y, color = "yellow")
+    # plt.plot(right_fitx, y, color = "yellow")
 
     left_lane_line.fit_y = y
     right_lane_line.fit_y = y

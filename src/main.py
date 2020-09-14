@@ -7,6 +7,7 @@ import pickle
 
 from moviepy.editor import VideoFileClip
 import os
+import sys
 
 from calibrate_camera import extract_points, camera_cal
 from helper import perspective_transform, curvature, draw_lines, draw_lane_lines, offset
@@ -24,7 +25,7 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
     warped, M, M_inv = perspective_transform(thresholded, mtx, dist, src, dest)
 
     #if not (left_lane_line.detected or right_lane_line.detected):
-    leftx, lefty, rightx, righty, car_center, lane_center, out_img = sliding_window(warped, left_lane_line, right_lane_line)
+    left_lane_line, right_lane_line, car_center, lane_center, y, out_img = sliding_window(warped, left_lane_line, right_lane_line)
 
     # print(left_fit)
     # print(right_fit)
@@ -35,42 +36,47 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
 
     # if abs(offset(car_center, lane_center)) > 0.3:
 
-    leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
+    # left_lane_line, right_lane_line, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
     
-    left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
+    # left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
 
     # sanity checks
 
-    left_curve, right_curve = curvature(left_fit, right_fit, y)
+    # left_curve, right_curve = curvature(left_lane_line.fit_x, right_lane_line.fit_x, y)
+    print("Left lane fitx: ", len(left_lane_line.fit_x))
+    print("Left lane fity: ", len(left_lane_line.y))
+    curverad = curvature(left_lane_line.fit_x, y)
+    print(curverad)
+    sys.exit()
+    
+    # if left_curve < 1000 or right_curve < 1000:
+    #     #leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
+    #     left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
+    #     left_curve, right_curve = curvature(left_fit, right_fit, y)
 
-    if left_curve < 1000 or right_curve < 1000:
-        #leftx, lefty, rightx, righty, car_center, lane_center = prior_frame_search(warped, 100, left_lane_line.current_fit, right_lane_line.current_fit)
-        left_fit, right_fit, left_fitx, right_fitx, y, out_img = fit_poly(warped.shape, leftx, lefty, rightx, righty, out_img)
-        left_curve, right_curve = curvature(left_fit, right_fit, y)
+    #     result = draw_lane_lines(image, undist, warped, left_lane_line.recent_xfitted, right_lane_line.recent_xfitted, y, M_inv, prev_car_center, prev_lane_center, 
+    #                              left_lane_line.radius_of_curvature, right_lane_line.radius_of_curvature)
 
-        result = draw_lane_lines(image, undist, warped, left_lane_line.recent_xfitted, right_lane_line.recent_xfitted, y, M_inv, prev_car_center, prev_lane_center, 
-                                 left_lane_line.radius_of_curvature, right_lane_line.radius_of_curvature)
-
-    else:
+    # else:
 
 
-        # update Line objects
-        left_lane_line.current_fit = left_fit
-        right_lane_line.current_fit = right_fit
-        left_lane_line.recent_xfitted = left_fitx
-        right_lane_line.recent_xfitted = right_fitx
-        left_lane_line.radius_of_curvature = left_curve
-        right_lane_line.radius_of_curvature = right_curve
+    #     # update Line objects
+    #     left_lane_line.current_fit = left_fit
+    #     right_lane_line.current_fit = right_fit
+    #     left_lane_line.recent_xfitted = left_fitx
+    #     right_lane_line.recent_xfitted = right_fitx
+    #     left_lane_line.radius_of_curvature = left_curve
+    #     right_lane_line.radius_of_curvature = right_curve
 
-        prev_car_center = car_center
-        prev_lane_center = lane_center
+    #     prev_car_center = car_center
+    #     prev_lane_center = lane_center
 
     # leftx, lefty, rightx, righty, car_center, lane_center = base_lane_lines(warped)
     # left_fit, right_fit, left_fitx, right_fitx, y = fit_poly(warped.shape, leftx, lefty, rightx, righty)
 
     # left_curve, right_curve = curvature(left_fit, right_fit, y)
 
-        result = draw_lane_lines(image, undist, warped, left_fitx, right_fitx, y, M_inv, car_center, lane_center, left_curve, right_curve)
+    result = draw_lane_lines(image, undist, warped, left_lane_line.fit_x, right_lane_line.fit_x, y, M_inv, car_center, lane_center, left_curve, right_curve)
 
     # draw_copy = np.copy(result)
 
@@ -83,6 +89,10 @@ def lanefinding_pipeline(image, left_lane_line, right_lane_line):
     # plt.imshow(result)
     
     # plt.show()
+
+    plt.imshow(result)
+    plt.show()
+    sys.exit()
 
     return result
 
@@ -142,7 +152,7 @@ if __name__ == "__main__":
     left_lane_line = Line()
     right_lane_line = Line()
 
-    result = find_lane_lines(image, left_lane_line, right_lane_line)
+    result = lanefinding_pipeline(image, left_lane_line, right_lane_line)
 
     # plt.imshow(image)
     # plt.show()
